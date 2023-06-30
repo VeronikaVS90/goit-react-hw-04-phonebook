@@ -7,17 +7,13 @@ import {
     ErrMessage,
 } from './Form.styled';
 import { nanoid } from 'nanoid';
-import { Formik } from 'formik';
+import { useForm } from 'react-hook-form';
+import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 
 export const ContactForm = ({ onSubmit }) => {
     const nameID = nanoid();
     const numberID = nanoid();
-
-    const initialValues = {
-        name: '',
-        number: '',
-    };
 
     const validationSchema = yup.object().shape({
         name: yup
@@ -36,30 +32,31 @@ export const ContactForm = ({ onSubmit }) => {
             .required(),
     });
 
-    const handleSubmit = (values, actions) => {
-        onSubmit(values);
-        actions.resetForm();
-    };
+    const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm({
+    resolver: yupResolver(validationSchema),
+  });
 
-    return (
-        <Formik
-            initialValues={initialValues}
-            validationSchema={validationSchema}
-            onSubmit={handleSubmit}
-        >
-            <AppForm autoComplete="off">
-                <FormInputLabel htmlFor={nameID}>Name</FormInputLabel>
-                <FormInput type="text" name="name" id={nameID} />
-                <ErrMessage name="name" component="div" />
+  const handleFormSubmit = data => {
+    onSubmit(data);
+    reset({ name: '', number: '' });
+  };
 
-                <FormInputLabel htmlFor={numberID}>Number</FormInputLabel>
-                <FormInput type="text" name="number" id={numberID} />
-                <ErrMessage name="number" component="div" />
-
-                <SubmitButton type="submit">Add contact</SubmitButton>
-            </AppForm>
-        </Formik>
-    );
+  return (
+    <AppForm autoComplete="off" onSubmit={handleSubmit(handleFormSubmit)}>
+      <FormInputLabel htmlFor={nameID}>Name</FormInputLabel>
+      <FormInput type="text" {...register('name')} id={nameID} />
+      {errors.name && <ErrMessage>{errors.name.message}</ErrMessage>}
+      <FormInputLabel htmlFor={numberID}>Number</FormInputLabel>
+      <FormInput type="text" {...register('number')} id={numberID} />
+      {errors.number && <ErrMessage>{errors.number.message}</ErrMessage>}
+      <SubmitButton type="submit">Submit</SubmitButton>
+    </AppForm>
+  );
 };
 
 ContactForm.propTypes = {
